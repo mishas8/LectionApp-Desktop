@@ -1,20 +1,15 @@
-#-------------------------------------------------
-#
-# Project created by QtCreator 2016-11-22T14:20:31
-#
-#-------------------------------------------------
-
-QT       += core gui
-
-greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
-
-TARGET = LectionApp-Desktop
 TEMPLATE = app
 
+QT += qml quick widgets
 
-SOURCES += main.cpp\
-        mainwindow.cpp
+CONFIG += c++11
 
-HEADERS  += mainwindow.h
+SOURCES += main.cpp
 
-FORMS    += mainwindow.ui
+RESOURCES += qml.qrc
+
+# Additional import path used to resolve QML modules in Qt Creator's code model
+QML_IMPORT_PATH =
+
+# Default rules for deployment.
+include(deployment.pri)
