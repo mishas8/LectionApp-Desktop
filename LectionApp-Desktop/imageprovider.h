@@ -2,49 +2,50 @@
 #define IMAGEPROVIDER_H
 #include <QAbstractItemModel>
 #include <QTreeView>
-//#include <QSqlDatabase>
+#include <QSqlDatabase>
 #include <QStringList>
 
-enum dataType {ROOT, SEMESTR, COURSE, LECTURE, IMAGE};
+enum h_type {ROOT, SEMESTR, SUBJECT, LECTURE, IMAGE};
 
 struct DataWrapper // обертка
 {
     int id;
-    dataType type;
-    void* data;
-    int number;
-    DataWrapper* parentPointer;
+    h_type type;
+    void* data; // HData or IData
+    int number; // index number
+    DataWrapper* parent_pointer;
     QList <DataWrapper*> children;
-    int childrenCount;
+    int children_count;
 };
 
 struct IData // Image Data
 {
     int id;
-    int p_id; // parentId
-    int number;
+    int p_id; // parent id
+    int number; // index number
     QString path; // path to image
-    QString comment;
+    QString comment; // about image
     QVector <QString> tags;
 };
 
-struct HData // Href Data
+struct HData // Hierarchy Data
 {
-    int id;
-    int p_id;
-    QString type;
+    int id; // Primary key
+    int p_id; // Parent id
+    QString type; // semestr, subject, lecture
     QString name;
     QString comment;
-    int number;
+    int number; // index number
 };
 
 class ImageProvider : public QAbstractItemModel
 {
 private:
     DataWrapper root {0, ROOT, nullptr, 0, nullptr, {}, 0};
-    int getChildCount(dataType type, int parentId) const;
+    int getChildCount(h_type type, int parentId) const;
     const DataWrapper* dataForIndex(const QModelIndex &index) const;
-    //DataWrapper* dataForIndex(const QModelIndex &index);
+    DataWrapper* dataForIndex(const QModelIndex &index);
+    QSqlDatabase db;
 
 public:
     ImageProvider(QString dbname, QObject *parent = nullptr);
