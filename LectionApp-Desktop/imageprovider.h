@@ -5,7 +5,7 @@
 #include <QSqlDatabase>
 #include <QStringList>
 
-enum h_type {ROOT, SEMESTR, SUBJECT, LECTURE, IMAGE};
+enum h_type {ROOT=0, SEMESTR=1, SUBJECT=2, LECTURE=3, IMAGE=4};
 
 struct DataWrapper // обертка
 {
@@ -25,14 +25,14 @@ struct IData // Image Data
     int number; // index number
     QString path; // path to image
     QString comment; // about image
-    QVector <QString> tags;
+    QStringList tags;
 };
 
 struct HData // Hierarchy Data
 {
     int id; // Primary key
     int p_id; // Parent id
-    QString type; // semestr, subject, lecture
+    int type; // semestr, subject, lecture
     QString name;
     QString comment;
     int number; // index number
@@ -41,8 +41,8 @@ struct HData // Hierarchy Data
 class ImageProvider : public QAbstractItemModel
 {
 private:
-    DataWrapper root {0, ROOT, nullptr, 0, nullptr, {}, 0};
-    int getChildCount(h_type type, int parentId) const;
+    DataWrapper root {0, ROOT, nullptr, 0, nullptr, {}, -1};
+    int getChildrenCount(h_type type, int p_id) const;
     const DataWrapper* dataForIndex(const QModelIndex &index) const;
     DataWrapper* dataForIndex(const QModelIndex &index);
     QSqlDatabase db;
