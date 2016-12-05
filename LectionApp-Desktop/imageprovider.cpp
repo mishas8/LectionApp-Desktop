@@ -170,6 +170,7 @@ void ImageProvider::fetchAll (const QModelIndex &parent)
         //auto number = query.value("Number").toInt();
         QStringList tags;
         int number;
+
         if (data->type == SEMESTR)
             tags = query.value("Tags").toStringList();
         if (data->type != SEMESTR)

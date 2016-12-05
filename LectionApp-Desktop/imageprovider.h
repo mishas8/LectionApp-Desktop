@@ -9,7 +9,7 @@ enum h_type {ROOT=0, SEMESTR=1, SUBJECT=2, LECTURE=3, IMAGE=4};
 
 struct DataWrapper // обертка
 {
-    int id;
+    unsigned int id;
     h_type type;
     void* data; // HData or IData
     int number; // index number
@@ -20,9 +20,6 @@ struct DataWrapper // обертка
 
 struct IData // Image Data
 {
-    int id;
-    int p_id; // parent id
-    int number; // index number
     QString path; // path to image
     QString comment; // about image
     QStringList tags;
@@ -30,12 +27,9 @@ struct IData // Image Data
 
 struct HData // Hierarchy Data
 {
-    int id; // Primary key
-    int p_id; // Parent id
     int type; // semestr, subject, lecture
     QString name;
     QString comment;
-    int number; // index number
 };
 
 class ImageProvider : public QAbstractItemModel
