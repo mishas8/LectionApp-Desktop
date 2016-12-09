@@ -12,6 +12,7 @@ int main(int argc, char *argv[])
     ImageProvider model("DB_Lectures", nullptr);
     QTreeView view;
     view.setModel(&model);
+    view.setWindowTitle(QObject::tr("Lectures"));
     view.show();
 
     /*QQmlApplicationEngine engine;

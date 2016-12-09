@@ -9,7 +9,7 @@ enum h_type {ROOT=0, SEMESTR=1, SUBJECT=2, LECTURE=3, IMAGE=4};
 
 struct DataWrapper // обертка
 {
-    unsigned int id;
+    int id;
     h_type type;
     void* data; // HData or IData
     int number; // index number
@@ -34,6 +34,8 @@ struct HData // Hierarchy Data
 
 class ImageProvider : public QAbstractItemModel
 {
+    Q_OBJECT
+
 private:
     DataWrapper root {0, ROOT, nullptr, 0, nullptr, {}, -1};
     int getChildrenCount(h_type type, int p_id) const;

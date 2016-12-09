@@ -14,7 +14,7 @@ ImageProvider::ImageProvider(QString dbname, QObject *parent)
     if (!db.open()){
         throw invalid_argument("Cannot open db");
     }
-    fetchAll (QModelIndex());
+    fetchAll(QModelIndex());
 }
 
 ImageProvider::~ImageProvider()
@@ -156,13 +156,25 @@ void ImageProvider::fetchAll (const QModelIndex &parent)
     DataWrapper *data = dataForIndex (parent);
     data->children.clear();
     QSqlQuery query;
+
+    if (!parent.isValid()) {
+        data->type = ROOT;
+    }
+
     if (data->type != LECTURE) {
         query.prepare ("SELECT * from hierarchy where pid = :id ORDER BY number");
     } else {
         query.prepare ("SELECT * from images where pid = :id ORDER BY number");
     }
-    query.bindValue (":id", data->id);
+
+    if (!parent.isValid()) {
+        query.bindValue (":id", data->id);
+    }
+    else {
+        query.bindValue(":id", 0);
+    }
     query.exec();
+
     while (query.next()) {
         auto id = query.value("id").toUInt();
         auto comment = query.value("Comment").toString();
@@ -191,7 +203,7 @@ void ImageProvider::fetchAll (const QModelIndex &parent)
             break;
         }
         case LECTURE: {
-            auto path = query.value ("path").toString();
+            auto path = query.value ("File_name").toString();
             data->children.append (
                         new DataWrapper{id, IMAGE, new IData{path, comment, tags},
                                     number, data, {}, getChildrenCount(IMAGE, id)});
@@ -201,5 +213,5 @@ void ImageProvider::fetchAll (const QModelIndex &parent)
             break;
         }
     }
-    data->children_count = data->children.size();
+    //data->children_count = data->children.size();
 }
