@@ -5,7 +5,8 @@ QT += qml quick widgets sql
 CONFIG += c++11
 
 SOURCES += main.cpp \
-    imageprovider.cpp
+    imageprovider.cpp \
+    mainwindow.cpp
 
 RESOURCES += qml.qrc
 
@@ -16,4 +17,5 @@ QML_IMPORT_PATH =
 include(deployment.pri)
 
 HEADERS += \
-    imageprovider.h
+    imageprovider.h \
+    mainwindow.h

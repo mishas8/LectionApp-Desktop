@@ -4,6 +4,7 @@
 #include <QSqlDatabase>
 #include <QSqlQuery>
 #include <QString>
+#include <QDebug>
 
 using namespace std;
 
@@ -39,17 +40,27 @@ QModelIndex ImageProvider::index(int row, int column, const QModelIndex &parent)
     if (column != 0) {
             return QModelIndex();
         }
-        if (!parent.isValid()) {
-            return createIndex (row, column, root.children[row]);
+
+    if (row == -1){
+            qDebug() << rowCount(parent);
+            qDebug() << columnCount(parent);
         }
-        const DataWrapper *parent_pointer = dataForIndex (parent);
-        if (parent_pointer->type == IMAGE) {
-            return QModelIndex();
-        }
-        if (parent_pointer->children.size() <= row){
-            return QModelIndex();
-        }
-        return createIndex (row, column, parent_pointer->children[row]);
+
+    if (!parent.isValid()) {
+        return createIndex (row, column, root.children[row]);
+    }
+
+    const DataWrapper *parent_pointer = dataForIndex (parent);
+
+    if (parent_pointer->type == IMAGE) {
+        return QModelIndex();
+    }
+
+    if (parent_pointer->children.size() <= row){
+        return QModelIndex();
+    }
+
+    return createIndex (row, column, parent_pointer->children[row]);
 }
 
 const DataWrapper *ImageProvider::dataForIndex(const QModelIndex &index) const
@@ -57,7 +68,7 @@ const DataWrapper *ImageProvider::dataForIndex(const QModelIndex &index) const
     if (!index.isValid()) {
         return &root;
     }
-    return static_cast<DataWrapper *>(index.internalPointer());
+    return static_cast<const DataWrapper *>(index.internalPointer());
 }
 
 DataWrapper *ImageProvider::dataForIndex (const QModelIndex &index)
@@ -70,37 +81,39 @@ DataWrapper *ImageProvider::dataForIndex (const QModelIndex &index)
 
 QVariant ImageProvider::data(const QModelIndex &index, int role) const
 {
-    if (!index.isValid()) return {};
+    if (!index.isValid()) {
+        qDebug() << "Invalid index(data)";
+        return {};
+    }
+
+    const DataWrapper *elem = dataForIndex (index);
+
     if (role == Qt::DisplayRole) {
-         if (index.isValid()) {
-             const DataWrapper *elem = dataForIndex (index);
-             switch (elem->type) {
-                 case SEMESTR:
-                 case SUBJECT:
-                 case LECTURE:
-                     return static_cast<HData*> (elem->data)->name;
-                 case IMAGE:
-                     return static_cast<IData*> (elem->data)->path;
-                 default:
-                     break;
-             }
+         switch (elem->type) {
+             case ROOT:
+             case SEMESTR:
+             case SUBJECT:
+             case LECTURE:
+                 return static_cast<HData*> (elem->data)->name;
+             case IMAGE:
+                 return static_cast<IData*> (elem->data)->comment;
+             default:
+                 return QVariant();
          }
-     }
+    }
+
     if (role == Qt::DecorationRole||Qt::SizeHintRole){
-         if (index.isValid()) {
-             const DataWrapper *elem = dataForIndex (index);
-                 if (elem->type == IMAGE){
-                     QPixmap pix;
-                     pix.load(static_cast<IData*> (elem->data)->path);
-                     if (role == Qt::DecorationRole){
-                         return pix;
-                     }
-                     else {
-                         return pix.size()/2;
-                     }
-             }
-         }
-     }
+        if (elem->type == IMAGE){
+            QPixmap pix;
+            pix.load(static_cast<IData*> (elem->data)->path);
+            if (role == Qt::DecorationRole){
+                return pix;
+            }
+            else {
+                return pix.size();
+            }
+        }
+    }
     return QVariant();
 }
 
@@ -111,22 +124,25 @@ int ImageProvider::getChildrenCount (h_type type, int p_id) const
     case ROOT:
     case SEMESTR:
     case SUBJECT:
-        query.prepare ("SELECT COUNT (*) from hierarchy where pid = :id ");
+        query.prepare ("SELECT COUNT (*) from hierarchy where p_id = :id ");
         break;
     case LECTURE:
-        query.prepare ("SELECT COUNT (*) from images where pid = :id ");
+        query.prepare ("SELECT COUNT (*) from images where p_id = :id ");
         break;
     case IMAGE:
         return 0;
     default:
-        break;
+        return 0;
     }
+
+    qDebug() << "PID: (getChildrenCount)" << p_id;
     query.bindValue (":id", p_id);
+    qDebug()<<query.boundValues();
     query.exec();
     query.next();
-    //qDebug() << query.executedQuery();
-    //qDebug() << query.lastError();
+    qDebug() << query.executedQuery();
     int count = query.value (0).toInt();
+    qDebug()<< "GetChildrenCount:" << count;
     return count;
 }
 
@@ -162,44 +178,53 @@ void ImageProvider::fetchAll (const QModelIndex &parent)
     }
 
     if (data->type != LECTURE) {
-        query.prepare ("SELECT * from hierarchy where pid = :id ORDER BY number");
+        query.prepare ("SELECT * from hierarchy where p_id = :id");
     } else {
-        query.prepare ("SELECT * from images where pid = :id ORDER BY number");
+        query.prepare ("SELECT * from images where p+id = :id");
     }
 
     if (!parent.isValid()) {
         query.bindValue (":id", data->id);
     }
     else {
+        qDebug() << "Root\n (fetchAll)";
         query.bindValue(":id", 0);
     }
+
     query.exec();
 
     while (query.next()) {
         auto id = query.value("id").toUInt();
         auto comment = query.value("Comment").toString();
-        //QStringList tags = query.value("Tags").toStringList();
-        //auto number = query.value("Number").toInt();
         QStringList tags;
         int number;
 
-        if (data->type == SEMESTR)
+        if (data->type == SEMESTR) {
             tags = query.value("Tags").toStringList();
-        if (data->type != SEMESTR)
+        }
+        if (data->type != SEMESTR) {
             number = query.value("Number").toInt();
-        else
+        } else {
             number = query.value("No").toInt();
+        }
 
         switch (data->type) {
         case ROOT:
         case SEMESTR:
         case SUBJECT: {
             auto type = query.value ("Type").toInt();
+            qDebug() << "Got type: (fetchAll)" << type << "\n";
             auto name = query.value ("Name").toString();
+            qDebug() << "name (fetchAll):" << name;
             data->children.append (
                         new DataWrapper{id, (h_type)type,
                                     new HData{type, name, comment},
                                     number, data, {}, getChildrenCount((h_type)type, id)});
+
+            qDebug() << "Children" << data->children.size();
+            qDebug() << "Count" << data->children_count;
+
+            data->children_count = data->children.size();
             break;
         }
         case LECTURE: {
@@ -207,9 +232,13 @@ void ImageProvider::fetchAll (const QModelIndex &parent)
             data->children.append (
                         new DataWrapper{id, IMAGE, new IData{path, comment, tags},
                                     number, data, {}, getChildrenCount(IMAGE, id)});
+
+            qDebug() << "Chidren theme: " << data->children.size();
+            data->children_count = data->children.size();
             break;
         }
         default:
+            data->children_count = 0;
             break;
         }
     }
