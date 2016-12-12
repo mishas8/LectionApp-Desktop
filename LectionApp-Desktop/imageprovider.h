@@ -37,7 +37,7 @@ class ImageProvider : public QAbstractItemModel
     Q_OBJECT
 
 private:
-    DataWrapper root {0, ROOT, nullptr, 0, nullptr, {}, -1};
+    DataWrapper root {0, ROOT, nullptr, 0, nullptr, {}, -1}; // id, type, data, number, parent, children, count
     int getChildrenCount(h_type type, int p_id) const;
     const DataWrapper* dataForIndex(const QModelIndex &index) const;
     DataWrapper* dataForIndex(const QModelIndex &index);

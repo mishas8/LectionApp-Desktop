@@ -5,7 +5,7 @@ MainWindow::MainWindow(QWidget *parent) : QDialog(parent)
     createActions();
     createMenus();
 
-    model = new ImageProvider("../DB_Lectures");
+    model = new ImageProvider("DB_Lectures");
     view = new QTreeView;
     view->setModel(model);
     view->setFixedSize(320, 320);

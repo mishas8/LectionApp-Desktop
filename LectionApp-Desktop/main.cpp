@@ -11,7 +11,7 @@ int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
 
-    ImageProvider model("../DB_Lectures");
+    ImageProvider model("DB_Lectures");
     QTreeView view;
     view.setModel(&model);
     view.setWindowTitle(QObject::tr("Lectures"));
